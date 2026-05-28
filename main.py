@@ -94,7 +94,7 @@ class GameDanmakuApp:
 
         self.tray_icon.show_notification(
             "Game Danmaku AI",
-            "应用已启动，按 F9 暂停，F10 隐藏，F11 设置"
+            "应用已启动，可通过系统托盘控制"
         )
 
         logger.info("Application started")

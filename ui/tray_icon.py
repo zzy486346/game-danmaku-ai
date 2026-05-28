@@ -54,10 +54,10 @@ class TrayIcon(QSystemTrayIcon):
         self.status_action.setEnabled(False)
         self.menu.addSeparator()
 
-        self.pause_action = self.menu.addAction("暂停 (F9)")
+        self.pause_action = self.menu.addAction("暂停")
         self.pause_action.triggered.connect(self._toggle_pause)
 
-        self.visibility_action = self.menu.addAction("隐藏弹幕 (F10)")
+        self.visibility_action = self.menu.addAction("隐藏弹幕")
         self.visibility_action.triggered.connect(self._toggle_visibility)
 
         self.clear_action = self.menu.addAction("清空弹幕")
@@ -65,7 +65,7 @@ class TrayIcon(QSystemTrayIcon):
 
         self.menu.addSeparator()
 
-        self.settings_action = self.menu.addAction("设置 (F11)")
+        self.settings_action = self.menu.addAction("设置")
         self.settings_action.triggered.connect(self.show_settings_signal.emit)
 
         self.menu.addSeparator()
@@ -88,10 +88,10 @@ class TrayIcon(QSystemTrayIcon):
         """Toggle pause state."""
         self.paused = not self.paused
         if self.paused:
-            self.pause_action.setText("继续 (F9)")
+            self.pause_action.setText("继续")
             self.status_action.setText("状态: 已暂停")
         else:
-            self.pause_action.setText("暂停 (F9)")
+            self.pause_action.setText("暂停")
             self.status_action.setText("状态: 运行中")
         self.toggle_pause_signal.emit()
 
@@ -99,9 +99,9 @@ class TrayIcon(QSystemTrayIcon):
         """Toggle visibility state."""
         self.visible = not self.visible
         if self.visible:
-            self.visibility_action.setText("隐藏弹幕 (F10)")
+            self.visibility_action.setText("隐藏弹幕")
         else:
-            self.visibility_action.setText("显示弹幕 (F10)")
+            self.visibility_action.setText("显示弹幕")
         self.toggle_visibility_signal.emit()
 
     def _clear_danmaku(self):

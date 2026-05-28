@@ -66,11 +66,6 @@ DEFAULT_CONFIG = {
         "use_gpu": True,
         "num_threads": 4
     },
-    "hotkeys": {
-        "toggle_pause": "F9",
-        "toggle_visibility": "F10",
-        "open_settings": "F11"
-    }
 }
 
 
