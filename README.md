@@ -22,10 +22,11 @@
 
 ### 安装步骤
 
-1. 克隆或下载项目：
+1. 克隆项目：
 
 ```bash
-cd D:\Project\myproject\game-danmaku-ai
+git clone https://github.com/zzy486346/game-danmaku-ai.git
+cd game-danmaku-ai
 ```
 
 2. 创建虚拟环境（推荐使用 uv）：
