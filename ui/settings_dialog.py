@@ -150,10 +150,15 @@ class SettingsDialog(QDialog):
         self.cloud_interval_spin.setSuffix(" 秒")
         cloud_layout.addRow("识别间隔:", self.cloud_interval_spin)
 
+        self.cloud_concurrency_spin = QSpinBox()
+        self.cloud_concurrency_spin.setRange(1, 8)
+        self.cloud_concurrency_spin.setValue(4)
+        cloud_layout.addRow("云端并发数:", self.cloud_concurrency_spin)
+
         layout.addWidget(cloud_group)
 
         test_layout = QHBoxLayout()
-        self.test_button = QPushButton("测试连接")
+        self.test_button = QPushButton("验证配置")
         self.test_button.clicked.connect(self._test_cloud_connection)
         test_layout.addWidget(self.test_button)
         self.test_status = QLabel("")
@@ -184,6 +189,7 @@ class SettingsDialog(QDialog):
         self.base_url_input.setEnabled(enabled)
         self.model_combo.setEnabled(enabled)
         self.cloud_interval_spin.setEnabled(enabled)
+        self.cloud_concurrency_spin.setEnabled(enabled)
         self.test_button.setEnabled(enabled)
 
     def _on_provider_changed(self, index):
@@ -211,7 +217,7 @@ class SettingsDialog(QDialog):
             self.model_combo.setCurrentIndex(0)
 
     def _test_cloud_connection(self):
-        """Test cloud API connection."""
+        """Validate cloud API configuration locally."""
         from ai.cloud_vision import create_provider
 
         provider_type = self.provider_combo.currentData()
@@ -224,14 +230,14 @@ class SettingsDialog(QDialog):
             self.test_status.setStyleSheet("color: red")
             return
 
-        self.test_status.setText("测试中...")
+        self.test_status.setText("验证中...")
         self.test_status.setStyleSheet("color: gray")
         self.test_button.setEnabled(False)
 
         try:
             provider = create_provider(provider_type, api_key, base_url, model)
             if provider:
-                self.test_status.setText("连接成功！")
+                self.test_status.setText("配置有效")
                 self.test_status.setStyleSheet("color: green")
             else:
                 self.test_status.setText("创建提供商失败")
@@ -363,9 +369,10 @@ class SettingsDialog(QDialog):
         index = self.provider_combo.findData(provider)
         if index >= 0:
             self.provider_combo.setCurrentIndex(index)
-        self.api_key_input.setText(cloud_config.get('api_key', ''))
+        self.api_key_input.setText(self.config.get('ai.cloud.api_key', ''))
         self.base_url_input.setText(cloud_config.get('base_url', ''))
         self.cloud_interval_spin.setValue(cloud_config.get('interval', 5))
+        self.cloud_concurrency_spin.setValue(cloud_config.get('max_concurrent', 4))
 
         model = cloud_config.get('model', '')
         if model:
@@ -414,6 +421,7 @@ class SettingsDialog(QDialog):
         self.config.set('ai.cloud.base_url', self.base_url_input.text().strip())
         self.config.set('ai.cloud.model', self.model_combo.currentText().strip())
         self.config.set('ai.cloud.interval', self.cloud_interval_spin.value())
+        self.config.set('ai.cloud.max_concurrent', self.cloud_concurrency_spin.value())
 
         self.config.set('danmaku.style.size', self.font_size_spin.value())
         self.config.set('danmaku.style.color', self.color_button.text() if hasattr(self.color_button, 'text') else '#FFFFFF')

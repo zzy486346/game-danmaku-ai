@@ -32,7 +32,17 @@ class CloudVisionProvider(ABC):
     def _encode_image(self, image) -> str:
         """Encode numpy image to base64."""
         import cv2
-        _, buffer = cv2.imencode('.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        height, width = image.shape[:2]
+        max_side = 640
+        scale = min(max_side / max(width, height), 1.0)
+        if scale < 1.0:
+            image = cv2.resize(
+                image,
+                (int(width * scale), int(height * scale)),
+                interpolation=cv2.INTER_AREA
+            )
+
+        _, buffer = cv2.imencode('.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, 60])
         return base64.b64encode(buffer).decode('utf-8')
 
     def _rate_limit(self):
@@ -77,7 +87,7 @@ class OpenAIProvider(CloudVisionProvider):
                     ]
                 }
             ],
-            "max_tokens": 500
+            "max_tokens": 120
         }
 
         try:
@@ -116,7 +126,7 @@ class ClaudeProvider(CloudVisionProvider):
 
         payload = {
             "model": self.model,
-            "max_tokens": 500,
+            "max_tokens": 120,
             "messages": [
                 {
                     "role": "user",
@@ -184,7 +194,7 @@ class OpenAICompatibleProvider(CloudVisionProvider):
                     ]
                 }
             ],
-            "max_tokens": 500
+            "max_tokens": 120
         }
 
         try:
@@ -256,7 +266,7 @@ PROVIDER_CONFIGS = {
     "qwen": {
         "name": "阿里 Qwen",
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-        "models": ["qwen3.6-plus", "qwen-vl-max", "qwen-vl-plus", "qwen-max", "qwen-plus"]
+        "models": ["qwen-vl-plus", "qwen-vl-max", "qwen3.6-plus", "qwen-max", "qwen-plus"]
     },
     "openai_compatible": {
         "name": "OpenAI兼容API",

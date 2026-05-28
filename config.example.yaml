@@ -4,7 +4,8 @@ ai:
     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
     enabled: false
     interval: 5
-    model: qwen-vl-max
+    max_concurrent: 4
+    model: qwen-vl-plus
     provider: qwen
   event_classification:
     enabled: false

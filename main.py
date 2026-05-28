@@ -3,7 +3,9 @@
 import sys
 import signal
 from pathlib import Path
-from threading import Thread
+from threading import Thread, Lock
+import time
+import random
 
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt, QTimer
@@ -35,6 +37,8 @@ class GameDanmakuApp:
 
         self.overlay = None
         self.tray_icon = None
+        self.cloud_lock = Lock()
+        self.cloud_active = 0
 
         self._initialize_components()
 
@@ -132,35 +136,52 @@ class GameDanmakuApp:
         if not self.config.get('ai.cloud.enabled', False):
             return
 
+        max_concurrent = max(1, self.config.get('ai.cloud.max_concurrent', 4))
+        with self.cloud_lock:
+            if self.cloud_active >= max_concurrent:
+                logger.debug("Skipping cloud analysis because max concurrent requests are running")
+                return
+            self.cloud_active += 1
+
         frame = self.screen_capture.get_latest_frame()
-        if frame is not None:
-            Thread(target=self._cloud_analyze, args=(frame,), daemon=True).start()
+        if frame is None:
+            with self.cloud_lock:
+                self.cloud_active -= 1
+            return
+
+        Thread(target=self._cloud_analyze, args=(frame,), daemon=True).start()
 
     def _cloud_analyze(self, frame):
         """Analyze frame with cloud API in background."""
+        started_at = time.perf_counter()
         try:
-            from danmaku.styles import get_random_style, PRESET_STYLES, DanmakuStyle
             results = self.ai_engine.process_frame(frame, use_cloud=True)
             danmaku_texts = self.ai_engine.generate_danmaku_text(results)
-            use_random = self.config.get('danmaku.style.random_color', True)
+            danmaku_texts = self._pick_cloud_danmaku(danmaku_texts)
+            logger.info(f"Cloud analysis queued {len(danmaku_texts)} danmaku in {time.perf_counter() - started_at:.1f}s")
 
             for text in danmaku_texts:
-                if use_random:
-                    style = get_random_style()
-                    style_name = f"random_{id(style)}"
-                    PRESET_STYLES[style_name] = style
-                else:
-                    color = self.config.get('danmaku.style.color', '#FFFFFF')
-                    style = DanmakuStyle(color=color)
-                    style_name = "custom"
-                    PRESET_STYLES[style_name] = style
-                self.danmaku_manager.add_text(text, style_name)
+                self.danmaku_manager.add_text(text)
         except Exception as e:
             logger.error(f"Cloud analysis error: {e}")
+        finally:
+            with self.cloud_lock:
+                self.cloud_active -= 1
+
+    def _pick_cloud_danmaku(self, danmaku_texts):
+        """Randomly select cloud comments so each response does not always show all."""
+        if len(danmaku_texts) <= 1:
+            return danmaku_texts
+
+        texts = list(danmaku_texts)
+        random.shuffle(texts)
+        count = random.randint(1, len(texts))
+        return texts[:count]
 
     def _update_performance(self):
         """Update performance metrics."""
         stats = self.perf_monitor.get_stats()
+        stats['fps'] = self.overlay.get_fps_actual()
         active_count = self.danmaku_manager.get_active_count()
         self.tray_icon.update_status(stats['fps'], active_count)
 
@@ -178,6 +199,11 @@ class GameDanmakuApp:
 
         cloud_interval = self.config.get('ai.cloud.interval', 5)
         self.cloud_timer.setInterval(cloud_interval * 1000)
+
+        self.overlay.apply_timer_config()
+        self.danmaku_manager.apply_config()
+        self.screen_capture.set_fps(self.config.get('capture.fps', 30))
+        self.screen_capture.monitor_index = self.config.get('capture.monitor', 0)
 
         logger.info(f"Timers updated: local={ai_interval}s, cloud={cloud_interval}s")
 

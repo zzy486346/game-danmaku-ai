@@ -12,17 +12,17 @@ from ai.event_classifier import EventClassifier, GameEvent
 from ai.cloud_vision import create_provider, PROVIDER_CONFIGS
 
 
-ANALYSIS_PROMPT = """你是一个游戏直播弹幕助手。分析这个屏幕截图，生成2-3条有趣的弹幕评论。
+ANALYSIS_PROMPT = """你是一个游戏直播弹幕助手。分析截图，生成1-2条短弹幕。
 
 要求：
-1. 弹幕要简短有趣，像观众在直播间发的评论
-2. 根据画面内容吐槽或评论
-3. 不要描述技术细节（不要提终端、代码、配置等）
-4. 用轻松幽默的语气
+1. 每条不超过18个字
+2. 像直播观众的即时吐槽
+3. 不要解释画面，不要提代码/配置/终端
+4. 只返回JSON
 
 返回JSON格式：
 {
-  "comments": ["弹幕1", "弹幕2", "弹幕3"]
+  "comments": ["弹幕1", "弹幕2"]
 }
 只返回JSON，不要其他内容。"""
 
@@ -79,7 +79,7 @@ class AIEngine:
             return
 
         provider_type = cloud_config.get('provider', 'openai')
-        api_key = cloud_config.get('api_key', '')
+        api_key = self.config.get('ai.cloud.api_key', '')
         base_url = cloud_config.get('base_url', None)
         model = cloud_config.get('model', None)
 
@@ -123,15 +123,15 @@ class AIEngine:
             'cloud_analysis': None
         }
 
-        with self.lock:
-            if use_cloud and self.cloud_provider:
-                cloud_result = self._analyze_with_cloud(frame)
-                if cloud_result:
-                    results['cloud_analysis'] = cloud_result
-                    results['events'].extend(cloud_result.get('events', []))
-                    results['ocr'].extend([{'text': t, 'confidence': 1.0} for t in cloud_result.get('texts', [])])
-                    results['objects'].extend([{'class': o, 'confidence': 1.0} for o in cloud_result.get('objects', [])])
-            else:
+        if use_cloud and self.cloud_provider:
+            cloud_result = self._analyze_with_cloud(frame)
+            if cloud_result:
+                results['cloud_analysis'] = cloud_result
+                results['events'].extend(cloud_result.get('events', []))
+                results['ocr'].extend([{'text': t, 'confidence': 1.0} for t in cloud_result.get('texts', [])])
+                results['objects'].extend([{'class': o, 'confidence': 1.0} for o in cloud_result.get('objects', [])])
+        else:
+            with self.lock:
                 if self.ocr_engine:
                     results['ocr'] = self.ocr_engine.recognize(frame)
 
