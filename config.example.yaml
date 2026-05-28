@@ -1,0 +1,48 @@
+ai:
+  cloud:
+    api_key: ''
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    enabled: false
+    interval: 5
+    model: qwen-vl-max
+    provider: qwen
+  event_classification:
+    enabled: false
+    model: game_events.pt
+  object_detection:
+    classes: []
+    confidence: 0.5
+    enabled: false
+    model: yolov8n.pt
+  ocr:
+    confidence: 0.6
+    enabled: false
+    language: ch
+capture:
+  fps: 60
+  monitor: 0
+  region: null
+danmaku:
+  animation:
+    fps: 144
+    max_count: 50
+    opacity: 0.8
+    speed: 5
+  display:
+    height_ratio: 0.3
+    position: center
+  style:
+    color: '#ffffff'
+    font: Microsoft YaHei
+    outline_color: '#000000'
+    outline_width: 2
+    random_color: false
+    size: 16
+hotkeys:
+  open_settings: F11
+  toggle_pause: F9
+  toggle_visibility: F10
+performance:
+  ai_interval: 3
+  num_threads: 6
+  use_gpu: true

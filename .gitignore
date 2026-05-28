@@ -1,0 +1,38 @@
+# Local secrets and machine-specific config
+.env
+.env.*
+!.env.example
+config.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Logs and runtime output
+*.log
+logs/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Local model weights and generated assets
+*.pt
+*.onnx
+*.engine
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
