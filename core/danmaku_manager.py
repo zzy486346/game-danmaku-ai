@@ -3,7 +3,8 @@
 import time
 import random
 from queue import Queue, Empty
-from threading import Thread, Event
+from threading import Thread, Event, Lock
+from difflib import SequenceMatcher
 from loguru import logger
 
 from danmaku.animation import AnimationEngine, DanmakuItem
@@ -24,7 +25,9 @@ class DanmakuManager:
         self.running = Event()
         self.process_thread = None
         self.recent_texts = []
-        self.max_recent = 20
+        self.max_recent = 100
+        self.recent_ttl = 180
+        self.recent_lock = Lock()
         self.apply_config()
 
     def start(self):
@@ -44,19 +47,18 @@ class DanmakuManager:
             self.process_thread.join(timeout=2)
         logger.info("Danmaku manager stopped")
 
-    def add_text(self, text: str, style_name: str = "default"):
+    def add_text(self, text: str, style_name: str = "default") -> bool:
         """Add text to danmaku queue with deduplication."""
-        if text in self.recent_texts:
-            return
+        if self._is_duplicate_text(text):
+            return False
 
-        self.recent_texts.append(text)
-        if len(self.recent_texts) > self.max_recent:
-            self.recent_texts.pop(0)
+        self._remember_text(text)
 
         try:
             self.text_queue.put_nowait((text, style_name))
+            return True
         except:
-            pass
+            return False
 
     def add_danmaku_from_ai(self, ai_results: dict):
         """Process AI results and generate danmaku."""
@@ -168,3 +170,54 @@ class DanmakuManager:
         style_name = f"random_{id(style)}"
         PRESET_STYLES[style_name] = style
         return style_name
+
+    def _is_duplicate_text(self, text: str) -> bool:
+        """Check exact and near-duplicate text in a recent time window."""
+        normalized = self._normalize_text(text)
+        if not normalized:
+            return True
+
+        now = time.time()
+        with self.recent_lock:
+            self._cleanup_recent(now)
+            for item in self.recent_texts:
+                if normalized == item["normalized"]:
+                    return True
+                if self._is_similar(normalized, item["normalized"]):
+                    return True
+        return False
+
+    def _remember_text(self, text: str):
+        """Remember accepted text for future deduplication."""
+        now = time.time()
+        with self.recent_lock:
+            self._cleanup_recent(now)
+            self.recent_texts.append({
+                "text": text,
+                "normalized": self._normalize_text(text),
+                "timestamp": now,
+            })
+            if len(self.recent_texts) > self.max_recent:
+                self.recent_texts = self.recent_texts[-self.max_recent:]
+
+    def _cleanup_recent(self, now: float):
+        """Remove old recent texts."""
+        cutoff = now - self.recent_ttl
+        self.recent_texts = [
+            item for item in self.recent_texts
+            if item["timestamp"] >= cutoff
+        ]
+
+    def _normalize_text(self, text: str) -> str:
+        """Normalize text for duplicate detection."""
+        return "".join(ch for ch in text.lower().strip() if ch.isalnum())
+
+    def _is_similar(self, left: str, right: str) -> bool:
+        """Detect near-duplicate short comments."""
+        if not left or not right:
+            return False
+
+        if left in right or right in left:
+            return min(len(left), len(right)) >= 6
+
+        return SequenceMatcher(None, left, right).ratio() >= 0.86

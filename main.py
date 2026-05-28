@@ -158,10 +158,13 @@ class GameDanmakuApp:
             results = self.ai_engine.process_frame(frame, use_cloud=True)
             danmaku_texts = self.ai_engine.generate_danmaku_text(results)
             danmaku_texts = self._pick_cloud_danmaku(danmaku_texts)
-            logger.info(f"Cloud analysis queued {len(danmaku_texts)} danmaku in {time.perf_counter() - started_at:.1f}s")
 
+            queued_count = 0
             for text in danmaku_texts:
-                self.danmaku_manager.add_text(text)
+                if self.danmaku_manager.add_text(text):
+                    queued_count += 1
+
+            logger.info(f"Cloud analysis queued {queued_count} danmaku in {time.perf_counter() - started_at:.1f}s")
         except Exception as e:
             logger.error(f"Cloud analysis error: {e}")
         finally:
