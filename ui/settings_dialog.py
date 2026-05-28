@@ -240,7 +240,7 @@ class SettingsDialog(QDialog):
         self.setMinimumSize(520, 480)
         self.resize(580, 620)
         self.setMaximumSize(16777215, 16777215)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowMaximizeButtonHint)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowMaximizeButtonHint | Qt.WindowType.WindowMinimizeButtonHint)
         self.setStyleSheet(GLOBAL_STYLESHEET)
         self._setup_ui()
         self._load_settings()
