@@ -65,6 +65,7 @@ class GameDanmakuApp:
         self.tray_icon.show_settings_signal.connect(self._show_settings)
         self.tray_icon.toggle_pause_signal.connect(self._toggle_pause)
         self.tray_icon.toggle_visibility_signal.connect(self._toggle_visibility)
+        self.tray_icon.clear_danmaku_signal.connect(self.overlay.clear_danmaku)
         self.tray_icon.quit_signal.connect(self.quit)
 
         self.ai_timer = QTimer()
