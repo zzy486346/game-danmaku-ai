@@ -8,7 +8,9 @@ from PySide6.QtWidgets import (
     QScrollArea, QFrame
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor
+import sys
+from PySide6.QtGui import QColor, QIcon
+from pathlib import Path
 from loguru import logger
 
 from ai.cloud_vision import PROVIDER_CONFIGS
@@ -241,6 +243,10 @@ class SettingsDialog(QDialog):
         self.resize(580, 620)
         self.setMaximumSize(16777215, 16777215)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowMaximizeButtonHint | Qt.WindowType.WindowMinimizeButtonHint)
+        base_path = Path(getattr(sys, '_MEIPASS', Path(__file__).parent.parent))
+        icon_path = base_path / "icon.ico"
+        if icon_path.exists():
+            self.setWindowIcon(QIcon(str(icon_path)))
         self.setStyleSheet(GLOBAL_STYLESHEET)
         self._setup_ui()
         self._load_settings()

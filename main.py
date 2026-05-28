@@ -9,7 +9,7 @@ import random
 
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QGuiApplication, QIcon
 from loguru import logger
 
 from utils.config_manager import ConfigManager
@@ -228,6 +228,11 @@ def main():
 
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
+
+    base_path = Path(getattr(sys, '_MEIPASS', Path(__file__).parent))
+    icon_path = base_path / "icon.ico"
+    if icon_path.exists():
+        app.setWindowIcon(QIcon(str(icon_path)))
 
     game_danmaku = GameDanmakuApp()
 
